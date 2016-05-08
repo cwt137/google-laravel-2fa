@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Crypt;
 use App\User;
-use Google2FA;
 use Validator;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Auth\ThrottlesLogins;
 use Illuminate\Foundation\Auth\AuthenticatesAndRegistersUsers;
+
+use Cache;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Contracts\Auth\Authenticatable;
+use App\Http\Requests\ValidateSecretRequest;
+
 
 class AuthController extends Controller
 {
@@ -42,7 +44,7 @@ class AuthController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('guest', ['except' => 'logout']);
+        $this->middleware($this->guestMiddleware(), ['except' => 'logout']);
     }
 
     /**
@@ -56,7 +58,7 @@ class AuthController extends Controller
         return Validator::make($data, [
             'name' => 'required|max:255',
             'email' => 'required|email|max:255|unique:users',
-            'password' => 'required|confirmed|min:6',
+            'password' => 'required|min:6|confirmed',
         ]);
     }
 
@@ -78,8 +80,8 @@ class AuthController extends Controller
     /**
      * Send the post-authentication response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
+     * @param  \Illuminate\Http\Request $request
+     * @param  \Illuminate\Contracts\Auth\Authenticatable $user
      * @return \Illuminate\Http\Response
      */
     protected function authenticated(Request $request, Authenticatable $user)
@@ -94,12 +96,12 @@ class AuthController extends Controller
         
         return redirect()->intended($this->redirectTo);
     }
-    
+
     /**
      *
      * @return \Illuminate\Http\Response
      */
-    public function getValidateSecret()
+    public function getValidateSecret() 
     {
         if(session('2fa:user:id')) {
             return view('2fa/validate');
@@ -107,33 +109,25 @@ class AuthController extends Controller
             return redirect('login');
         }
     }
+    
     /**
      *
-     * @param  \Illuminate\Http\Request $request
+     * @param  App\Http\Requests\ValidateSecretRequest $request
      * @return \Illuminate\Http\Response
      */
-    public function postValidateSecret(Request $request)
+    public function postValidateSecret(ValidateSecretRequest $request) 
     {
-        $this->validate($request, ['totp' => 'required|digits:6']);
+        //get user id and create cache key
+        $userId = $request->session()->pull('2fa:user:id');
+        $key    = $userId . ':' . $request->totp;
         
-        if (!session('2fa:user:id')) {
-            return redirect('login');
-        }
+        //use cache to store token to blacklist
+        Cache::add($key, true, 4);
         
-        $user = (new User)->findOrFail(
-                    $request->session()->pull('2fa:user:id')
-                );
-        
-        $secret = Crypt::decrypt($user->google2fa_secret);
-        
-        $valid = Google2FA::verifyKey($secret, $request->totp);
-        
-        if ($valid) {
-            Auth::login($user);
-            return redirect()->intended($this->redirectTo);
-        } else {
-            return back();
-        }
+        //login and redirect user
+        Auth::loginUsingId($userId);
+            
+        return redirect()->intended($this->redirectTo);
     }
 
 }

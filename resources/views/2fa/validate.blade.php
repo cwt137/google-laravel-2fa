@@ -1,4 +1,3 @@
-
 @extends('layouts.app')
 
 @section('content')
@@ -19,9 +18,9 @@
                                 <input type="number" class="form-control" name="totp">
 
                                 @if ($errors->has('totp'))
-                                    <span class="help-block">
-                                        <strong>{{ $errors->first('totp') }}</strong>
-                                    </span>
+                                <span class="help-block">
+                                    <strong>{{ $errors->first('totp') }}</strong>
+                                </span>
                                 @endif
                             </div>
                         </div>
@@ -40,3 +39,4 @@
     </div>
 </div>
 @endsection
+

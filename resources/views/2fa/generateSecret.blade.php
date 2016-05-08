@@ -10,10 +10,10 @@
                 <div class="panel-body">
                     Open up your 2FA mobile app and scan the following QR barcode:
                     <br />
-                    <img alt="Image of QR barcode" src="{{ $imageUrl }}" />
-
+                    <img alt="Image of QR barcode" src="{{ $image }}" />
+                    
                     <br />
-                    If your 2FA mobile app does not support QR barcodes,
+                    If your 2FA mobile app does not support QR barcodes, 
                     enter in the following number: <code>{{ $secret }}</code>
                     <br /><br />
                     <a href="{{ url('/home') }}">Go Home</a>
@@ -23,3 +23,4 @@
     </div>
 </div>
 @endsection
+
