@@ -26,7 +26,13 @@ class Google2FAController extends Controller
     public function generateSecret(Request $request) 
     {   
         //generate new secret
-        $secret = Google2FA::generateSecretKey();
+        $randomBytes = str_split(openssl_random_pseudo_bytes(16));
+        $secret      = collect($randomBytes)->map(function($item) {
+            return ord($item) % 32;
+        })->reduce(function($carry, $item) {
+            $b32 = "234567QWERTYUIOPASDFGHJKLZXCVBNM";
+            return $carry .$b32[$item];
+        });
         
         $user = $request->user();
         
