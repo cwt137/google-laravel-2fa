@@ -19,7 +19,7 @@ Route::auth();
 
 Route::get('/home', 'HomeController@index');
 
-Route::get('/2fa/enable', 'Google2FAController@generateSecret');
-Route::get('/2fa/disable', 'Google2FAController@removeSecret');
-Route::get('/2fa/validate', 'Auth\AuthController@getValidateSecret');
-Route::post('/2fa/validate', ['middleware' => 'throttle:5', 'uses' => 'Auth\AuthController@postValidateSecret']);
+Route::get('/2fa/enable', 'Google2FAController@enableTwoFactor');
+Route::get('/2fa/disable', 'Google2FAController@disableTwoFactor');
+Route::get('/2fa/validate', 'Auth\AuthController@getValidateToken');
+Route::post('/2fa/validate', ['middleware' => 'throttle:5', 'uses' => 'Auth\AuthController@postValidateToken']);

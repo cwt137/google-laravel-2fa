@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use Crypt;
 use Google2FA;
-use App\Http\Requests;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use \ParagonIE\ConstantTime\Base32;
 
 class Google2FAController extends Controller
 {
@@ -23,17 +23,17 @@ class Google2FAController extends Controller
         $this->middleware('web');
     }
     
-    public function generateSecret(Request $request) 
-    {   
+    /**
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function enableTwoFactor(Request $request)
+    {
         //generate new secret
-        $randomBytes = str_split(openssl_random_pseudo_bytes(16));
-        $secret      = collect($randomBytes)->map(function($item) {
-            return ord($item) % 32;
-        })->reduce(function($carry, $item) {
-            $b32 = "234567QWERTYUIOPASDFGHJKLZXCVBNM";
-            return $carry .$b32[$item];
-        });
+        $secret = $this->generateSecret();
         
+        //get user
         $user = $request->user();
         
         //encrypt and then save secret
@@ -48,19 +48,35 @@ class Google2FAController extends Controller
             200
         );
         
-        return view('2fa/generateSecret', ['image' => $imageDataUri,
+        return view('2fa/enableTwoFactor', ['image' => $imageDataUri,
             'secret' => $secret]);
     }
     
-    public function removeSecret(Request $request) 
+    /**
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function disableTwoFactor(Request $request)
     {
         $user = $request->user();
         
         //make secret column blank
-        $user->google2fa_secret = NULL;
+        $user->google2fa_secret = null;
         $user->save();
         
-        return view('2fa/removeSecret');
+        return view('2fa/disableTwoFactor');
     }
     
+    /**
+     * Generate a secret key in Base32 format
+     *
+     * @return string
+     */
+    private function generateSecret()
+    {
+        $randomBytes = random_bytes(10);
+        
+        return Base32::encodeUpper($randomBytes) 
+    }
 }
