@@ -26,5 +26,5 @@ This is the completed example code that shows how implement two-factor authentic
 
 ## Read The Article
 
-To learn more about this code, read the article:
+To learn more about this code, read the article "[2FA in Laravel with Google Authenticator - Get Secure!](https://www.sitepoint.com/2fa-in-laravel-with-google-authenticator-get-secure/)".
 
